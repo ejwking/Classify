@@ -1,3 +1,33 @@
+
+Classify - 2025 - Edward King 
+
+This project is licensed under the GNU General Public License v3.0 (GPLv3).
+
+Portions of this project are derived from two other projects:
+
+1) Modern, Header-only C++11-26 bindings for the Ollama API.
+   Access the full power of local language models in C++ with just a few lines of code
+   https://github.com/jmont-dev/ollama-hpp
+   ollama-hpp
+   MIT License
+   Copyright (c) 2025 James Montgomery (jmont)
+
+2) Calculate YOLO anchors (source code file - /DarkMark/src-darknet/yolo_anchors.cpp)
+   https://codeberg.org/CCodeRun/DarkMark
+   https://github.com/stephanecharette/DarkMark
+   https://www.ccoderun.ca/darkmark/
+   DarkMark - Marking up images for use with Darknet.
+   GNU GPL v3
+   DarkMark (C) 2019-2024 Stephane Charette <stephanecharette@gmail.com>
+
+
+Since the strongest license here is GNU-GPLv3 this project must also use GNU-GPLv3
+
+
+######################################################################################
+######################################################################################
+
+
                     GNU GENERAL PUBLIC LICENSE
                        Version 3, 29 June 2007
 
