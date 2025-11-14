@@ -1,0 +1,14 @@
+
+#pragma once
+
+#include "Annotations.h"
+
+
+/** The original @p calc_anchors() code from Darknet was taken from src/detector.c.  The code was then heavily modified
+ * to bring it up to C++, remove memory leaks, cut out unneeded functionality, and remove all console output.  This new
+ * function returns 3 values:  @p new_anchors, @p new_counters_per_class, and @p new_avg_iou.
+ */
+
+//extern void calc_anchors(const std::string & train_images_filename, const mySIZE_T number_of_clusters, const mySIZE_T width, const mySIZE_T height, const mySIZE_T number_of_classes, std::string & new_anchors, std::string & new_counters_per_class, float & new_avg_iou);
+
+extern int CalculateYoloAnchors(CWnd *pCWnd, FILENAMEGROUP_FILTERED *pFiltrd, float TargetWd, float TargetHt);
