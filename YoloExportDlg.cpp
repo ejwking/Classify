@@ -651,7 +651,7 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 
 		add.Format("\r\n______________________________________________________\r\nANNOTATIONS : %d (avg per picture : %.2f)\r\n\r\nTarget size - Wd %d, Ht %d%s\r\n", stats.Cnt.Annotations, avgapp, (int)m_TargetWd, (int)m_TargetHt, pWarn);
 		Str += add;
-		Str += "Below, bounding box min/max pixel sizes are scaled to target.\r\nNumber in square brackets after min and max is an example picture index.\r\nSize Distribution (0.0 to 1.0) in 0.1 increments.";
+		Str += "Below, min/max - box pixel size scaled to target.\r\nNumber in square brackets after min and max is an example picture index.\r\nDistribution - relative size (0.0 to 1.0) in 0.1 increments.";
 		CLASS_STATS *pClassStats = stats.Class;
 		for(i=0; i<_MAX_CLASSES_; i++, pClassStats++){
 			if(pClassStats->Count > 0){
