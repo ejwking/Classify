@@ -79,6 +79,7 @@ BOOL CYoloExportDlg::OnInitDialog()
 		msg.Format("picture folder: %s\r\npicture path list file: %s\r\nTargetWd: %d\r\nTargetHt: %d", m_pPictureFolder, m_PathListPath, (int)m_TargetWd, (int)m_TargetHt);
 		GetDlgItem(IDC_EDIT_YE_INFO)->SetWindowText(msg);
 	}
+	GetDlgItem(IDC_CHECK_PIC_CACHE)->SetWindowText("Use picture cache.\r\nAs well as writting the annotation files to the cache folder, when export annotations button below is pressed, all bitmaps will be copied to the cache folder at target dimensions.");
 
 	if(m_Error){
 		GetDlgItem(IDC_BTN_EXPORT_PATHLIST)->EnableWindow(0);
@@ -650,11 +651,11 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 
 		add.Format("\r\n______________________________________________________\r\nANNOTATIONS : %d (avg per picture : %.2f)\r\n\r\nTarget size - Wd %d, Ht %d%s\r\n", stats.Cnt.Annotations, avgapp, (int)m_TargetWd, (int)m_TargetHt, pWarn);
 		Str += add;
-		Str += "Below, bounding box min/max pixel sizes are scaled to target, the number in square brackets after min and max is an example picture index. Size distribution is from 0.0 to 1.0.\r\n";
+		Str += "Below, bounding box min/max pixel sizes are scaled to target.\r\nNumber in square brackets after min and max is an example picture index.\r\nSize Distribution (0.0 to 1.0) in 0.1 increments.";
 		CLASS_STATS *pClassStats = stats.Class;
 		for(i=0; i<_MAX_CLASSES_; i++, pClassStats++){
 			if(pClassStats->Count > 0){
-				add.Format("\r\n[%d:%s] : %d (%.2f%%), pictures with : %d (%.2f%%)", i, g_CIdM.GetLabel(i), pClassStats->Count, MakePercentage(pClassStats->Count, stats.Cnt.Annotations), pClassStats->OnePerPicCount, MakePercentage(pClassStats->OnePerPicCount, stats.Cnt.Pictures));
+				add.Format("\r\n\r\n[%d:%s] : %d (%.2f%%), pictures with : %d (%.2f%%)", i, g_CIdM.GetLabel(i), pClassStats->Count, MakePercentage(pClassStats->Count, stats.Cnt.Annotations), pClassStats->OnePerPicCount, MakePercentage(pClassStats->OnePerPicCount, stats.Cnt.Pictures));
 				Str += add;
 				if(m_TargetWd>0.0f && m_TargetHt>0.0f){
 					AddSizeDistributionString("Wd", &pClassStats->Wd, pClassStats->Distribution_W, Str, add);
@@ -670,7 +671,7 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 
 void CYoloExportDlg::AddSizeDistributionString(char *pLabel, MINMAXAVG *pMMA, int *pDistribution, CString &Str, CString &add)
 {
-	add.Format("\r\n    %s %s, Distribution : ", pLabel, GetMMAString(pMMA));
+	add.Format("\r\n    %s %s,  Distribution : ", pLabel, GetMMAString(pMMA));
 	Str += add;
 	for(int d=0; d<DISTRIBUTION_COUNT; d++){
 		add.Format("%d,", pDistribution[d]);

@@ -82,6 +82,8 @@ public:
 	int  AddBoxToFilenameGroup(BBOX *pbb=nullptr);
 	int  GetBboxIndex(CPoint point);
 	void SetInfoBoxText();
+	void SetInfoBoxText_WithSelection(int Idx);
+	void SetInfoBoxText_NoSelection();
 	void GetBoxPixelWdHt(BBOX *pBox, int OnOriginal, int &Wd, int &Ht);
 	int  SetDirtyAndMakeCopyBeforeChanges();
 	void StartEditingBox(int Idx, CPoint point);

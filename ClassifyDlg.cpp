@@ -820,68 +820,84 @@ void CClassifyDlg::GetBoxPixelWdHt(BBOX *pBox, int OnOriginal, int &Wd, int &Ht)
 	else           BboxToPixelWdHt_Inc_Exc(Wd, Ht, m_MO.General.TargetWidth, m_MO.General.TargetHeight, pBox);
 }
 
+void CClassifyDlg::SetInfoBoxText_WithSelection(int Idx)
+{
+	CString str, tmp; // (use 'sprintf_s(m_TempStr,' instead for more efficiency)
+	int W, H;
+	CLASSIFIEDLINE *pCL = &m_pGrp->pClsfdLines[Idx];
+	if(pCL->Model_Code>=0 && pCL->Model_Code<MODELCODE::MODEL_NUM_ENTRIES)
+		str.Format("%s", g_pModelCode[pCL->Model_Code]);
+
+	if(pCL->DebugCode != 0){
+		int bits = sizeof(pCL->DebugCode) * 8;
+		tmp.Format("\r\nDebugCodes (%dbit) ", bits);
+		str += tmp;
+		for(int i=0; i<bits; i++)
+			if(pCL->DebugCode&(1<<i)){ tmp.Format("%d.", i); str += tmp; }
+	}
+	float w = pCL->box.x2-pCL->box.x1, h = pCL->box.y2-pCL->box.y1;
+	tmp.Format("\r\n%s :\r\n  x[%.4f, %.4f] y[%.4f, %.4f]\r\n  w%.4f h%.4f area%.4f\r\n", g_CIdM.GetLabel(pCL->ClassId), pCL->box.x1, pCL->box.x2, pCL->box.y1, pCL->box.y2, w, h, w*h);
+	str += tmp;
+	GetBoxPixelWdHt(&pCL->box, 1, W, H);
+	tmp.Format("  w%d h%d pix on original (w%d, h%d) - ratio %.3f\r\n", W, H, m_pGrp->pPicInfo->Width, m_pGrp->pPicInfo->Height, (H!=0) ? ((float)W/(float)H) : 0.0f);
+	str += tmp;
+
+	if(m_MO.General.TargetWidth>0 && m_MO.General.TargetHeight>0){
+		GetBoxPixelWdHt(&pCL->box, 0, W, H);
+		tmp.Format("  w%d h%d pix on target (w%d, h%d)\r\n", W, H, m_MO.General.TargetWidth, m_MO.General.TargetHeight);
+		str += tmp;
+	}
+	else{
+		tmp.Format("\r\nset target dimensions in options dialog to see target data here");
+		str += tmp;
+	}
+	//	tmp.Format(" original w:%s h:%s to target\r\n", UPDOWNMATCHSTR(m_pGrp->pPicInfo->Width, m_MO.General.TargetWidth), UPDOWNMATCHSTR(m_pGrp->pPicInfo->Height, m_MO.General.TargetHeight));
+	//	tmp.Format(" w%d h%d minimum\r\n", min(W1, W2), min(H1, H2));
+	//	str += tmp;
+	GetDlgItem(IDC_EDIT_INFO)->SetWindowText(str);
+}
+
+void CClassifyDlg::SetInfoBoxText_NoSelection()
+{
+	CString str, tmp;
+	int W, H;
+	str.Format("Timestamp: %s, %s, %s\r\nAnnotations %d: ", TimestampToString(m_pGrp->Timestamp), g_pColourCode[m_pGrp->pPicInfo->ColourCode], (m_pGrp->pPicInfo->PictureCode>0)?g_pPictureCode[m_pGrp->pPicInfo->PictureCode]:"", m_pGrp->NumClsfdLines);
+	if(m_pGrp->NumClsfdLines>0 && m_pGrp->pClsfdLines[0].ClassId>=0){
+		for(int cls=0; cls<_MAX_CLASSES_; cls++){
+			int MinHt=100000, MinWd=100000, MaxHt=0, MaxWd=0;
+			int labelCount = 0;
+			for(int i=0; i<m_pGrp->NumClsfdLines; i++){
+				if(m_pGrp->pClsfdLines[i].ClassId == cls){
+					GetBoxPixelWdHt(&m_pGrp->pClsfdLines[i].box, 1, W, H);
+					MinHt = min(MinHt, H);
+					MinWd = min(MinWd, W);
+					MaxHt = max(MaxHt, H);
+					MaxWd = max(MaxWd, W);
+					labelCount++;
+				}
+			}
+			if(labelCount > 0){
+				if(labelCount > 1)
+					tmp.Format("\r\n  %s : %d  -  min(w %d h %d) max(w %d h %d)", g_CIdM.GetLabel(cls), labelCount, MinWd, MinHt, MaxWd, MaxHt);
+				else
+					tmp.Format("\r\n  %s : %d  -  (w %d h %d)", g_CIdM.GetLabel(cls), labelCount, MinWd, MinHt);
+				str += tmp;
+			}
+		}
+	}
+	else str += "\r\n negative picture";
+	GetDlgItem(IDC_EDIT_INFO)->SetWindowText(str);
+}
+
 //#define UPDOWNMATCHSTR(ori, tar) (ori==tar)?"match":((ori>tar)?"downscale":"upscale")
 void CClassifyDlg::SetInfoBoxText()
 {
 	if(m_pGrp){
-		CString str, tmp; // (use 'sprintf_s(m_TempStr,' instead for more efficiency)
-		int W, H, Idx = m_Display.GetSelectedBox(m_pGrp, ANY_SELECTION_TYPE);
-		if(Idx >= 0){
-			CLASSIFIEDLINE *pCL = &m_pGrp->pClsfdLines[Idx];
-			if(pCL->Model_Code>=0 && pCL->Model_Code<MODELCODE::MODEL_NUM_ENTRIES)
-				str.Format("%s", g_pModelCode[pCL->Model_Code]);
-
-			if(pCL->DebugCode != 0){
-				int bits = sizeof(pCL->DebugCode) * 8;
-				tmp.Format("\r\nDebugCodes (%dbit) ", bits);
-				str += tmp;
-				for(int i=0; i<bits; i++)
-					if(pCL->DebugCode&(1<<i)){ tmp.Format("%d.", i); str += tmp; }
-			}
-			float w = pCL->box.x2-pCL->box.x1, h = pCL->box.y2-pCL->box.y1;
-			tmp.Format("\r\n%s :\r\n  x[%.4f, %.4f] y[%.4f, %.4f]\r\n  w%.4f h%.4f area%.4f\r\n", g_CIdM.GetLabel(pCL->ClassId), pCL->box.x1, pCL->box.x2, pCL->box.y1, pCL->box.y2, w, h, w*h);
-			str += tmp;
-			GetBoxPixelWdHt(&pCL->box, 1, W, H);
-			tmp.Format("  w%d h%d pix on original (w%d, h%d) - ratio %.3f\r\n", W, H, m_pGrp->pPicInfo->Width, m_pGrp->pPicInfo->Height, (H!=0) ? ((float)W/(float)H) : 0.0f);
-			str += tmp;
-			if(m_MO.General.TargetWidth>0 && m_MO.General.TargetHeight>0){
-				GetBoxPixelWdHt(&pCL->box, 0, W, H);
-				tmp.Format("  w%d h%d pix on target (w%d, h%d)\r\n", W, H, m_MO.General.TargetWidth, m_MO.General.TargetHeight);
-				str += tmp;
-			}
-			else{
-				tmp.Format("\r\nset target dimensions in options dialog to see target data here");
-				str += tmp;
-			}
-		//	tmp.Format(" original w:%s h:%s to target\r\n", UPDOWNMATCHSTR(m_pGrp->pPicInfo->Width, m_MO.General.TargetWidth), UPDOWNMATCHSTR(m_pGrp->pPicInfo->Height, m_MO.General.TargetHeight));
-		//	tmp.Format(" w%d h%d minimum\r\n", min(W1, W2), min(H1, H2));
-		//	str += tmp;
-		}
-		else{
-			str.Format("Timestamp: %s, %s, %s\r\nAnnotations %d: ", TimestampToString(m_pGrp->Timestamp), g_pColourCode[m_pGrp->pPicInfo->ColourCode], (m_pGrp->pPicInfo->PictureCode>0)?g_pPictureCode[m_pGrp->pPicInfo->PictureCode]:"", m_pGrp->NumClsfdLines);
-			if(m_pGrp->NumClsfdLines>0 && m_pGrp->pClsfdLines[0].ClassId>=0){
-				int i, labelCount[_MAX_CLASSES_]={0}, MinHt[_MAX_CLASSES_]={0}, MinWd[_MAX_CLASSES_]={0};
-				// dont use g_CIdM.m_NumClasses here because i want to see statistics for the 'debug' classes too.
-				CLASSIFIEDLINE *pCL = m_pGrp->pClsfdLines;
-				for(i=0; i<m_pGrp->NumClsfdLines; i++, pCL++){
-					if(pCL->ClassId>=0 && pCL->ClassId<_MAX_CLASSES_){	// only need to test its not -1 actually.
-						labelCount[pCL->ClassId]++;
-						GetBoxPixelWdHt(&pCL->box, 1, W, H);
-						if(MinHt[pCL->ClassId] == 0) MinHt[pCL->ClassId] = H;
-						else MinHt[pCL->ClassId] = min(MinHt[pCL->ClassId], H);
-						if(MinWd[pCL->ClassId] == 0) MinWd[pCL->ClassId] = W;
-						else MinWd[pCL->ClassId] = min(MinWd[pCL->ClassId], W);
-					}
-				}
-				for(i=0; i<_MAX_CLASSES_; i++)
-					if(labelCount[i] > 0){
-						tmp.Format("\r\n  %s : %d  -  min(w %d, h %d)", g_CIdM.GetLabel(i), labelCount[i], MinWd[i], MinHt[i]);
-						str += tmp;
-					}
-			}
-			else str += "\r\n negative picture";
-		}
-		GetDlgItem(IDC_EDIT_INFO)->SetWindowText(str);
+		int Idx = m_Display.GetSelectedBox(m_pGrp, ANY_SELECTION_TYPE);
+		if(Idx >= 0)
+			SetInfoBoxText_WithSelection(Idx);
+		else
+			SetInfoBoxText_NoSelection();
 	}
 	else GetDlgItem(IDC_EDIT_INFO)->SetWindowText("when editing annotations have window as big as possible to reduce rounding errors.\r\n\r\nload your annotations csv file to begin..");
 }

@@ -57,7 +57,7 @@ GENERAL\
 \r\n\
 \r\nANNOTATION EDITING AND NAVIGATION\
 \r\n key : [up][down] - cycle bounding boxes and highlight\
-\r\n key : [control] - un-highlight or un-select bounding box, if there are no highlighted/selected boxes show/hide annotations\
+\r\n key : [control] - un-highlight or un-select bounding box, if there are no highlighted/selected boxes show/hide boxes\
 \r\n key : [L] - cycle level of label info displayed\
 \r\n\
 \r\n key : [S] - enable editing of currently highlighted box\
@@ -70,9 +70,9 @@ GENERAL\
 \r\n mouse : left button - select bounding box\
 \r\n mouse : hover - select movement anchor\
 \r\n mouse : right button (and hold) - position/drag movement anchor, or, create new bounding box\
-\r\n mouse : wheel - set class id for last or currently selected/highlighted bounding box (also see, key : [1-9])\
+\r\n mouse : wheel - cycle class id for last or currently selected/highlighted bounding box (also see, key : [1-9])\
 \r\n\
-\r\n SHIFT and mouse : popular class assignment\
+\r\n SHIFT (and hold) and mouse buttons : popular class assignment\
 \r\n__________________________________________________________________________________\
 \r\nTo save changes to the annotations for the current picture you must press the 'classified accept' or\
 \r\n'classified special' key.\

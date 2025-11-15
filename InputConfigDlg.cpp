@@ -104,7 +104,10 @@ BOOL CInputConfigDlg::OnInitDialog()
 	EnableControlsAccrordingly();
 
 	GetDlgItem(IDC_CHECK_AUTO_ANNO)->SetWindowText("Annotation processing with object crop and export, see FixAndCropPictures.cpp.\nProcesses special annotations 'remove' and 'blurr' - sections of the picture are cropped or blurred accordingly. \
-Pictures which have undergone this process are exported to folder 'cp_exports' (in base folder). Processing also does exports for augmentation and to optimise object size according to parameters specified in FixAndCropPictures.cpp");
+Pictures which have undergone this process are exported to folder 'cp_exports' (in base picture folder). Processing also does exports for augmentation and to optimise object size according to parameters specified in FixAndCropPictures.cpp");
+
+	//GetDlgItem(IDC_CHECK_AUTO_ANNO)->EnableWindow(0);
+	//GetDlgItem(IDC_CHECK_DEBUG_AUTO_ANNO)->EnableWindow(0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// EXCEPTION: OCX Property Pages should return FALSE
