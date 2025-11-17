@@ -499,8 +499,12 @@ static char *GetMMAString(MINMAXAVG *pMMA)
 {
 	static char Str[128];
 	double Av = pMMA->Avg / (double)pMMA->Num;
-	int NotZeroBased = 1;	// index displayed in UI is one-based, hence added one to the indexes.
-	sprintf_s(Str, num_entries(Str), " - Min %d[%d], Max %d[%d], Avg %d", (int)pMMA->Min, pMMA->Min_PicIdx+NotZeroBased, (int)pMMA->Max, pMMA->Max_PicIdx+NotZeroBased, (int)Av);
+
+//	int NotZeroBased = 1;	// index displayed in UI is one-based, hence added one to the indexes.
+//	sprintf_s(Str, num_entries(Str), " - Min %d[%d], Max %d[%d], Avg %d", (int)pMMA->Min, pMMA->Min_PicIdx+NotZeroBased, (int)pMMA->Max, pMMA->Max_PicIdx+NotZeroBased, (int)Av);
+
+	// i've removed Min_PicIdx and Max_PicIdx from the string now, I added this before pic filters and sorting was in place, so its not necessary anymore, and looks confusing in the stats display.
+	sprintf_s(Str, num_entries(Str), " - Min %d, Max %d, Avg %d", (int)pMMA->Min, (int)pMMA->Max, (int)Av);
 	return Str;
 }
 
@@ -555,11 +559,10 @@ void CYoloExportDlg::LoadStatistics(STATISTICS &stats, BOOL UseAnnotationFilter)
 #endif
 			{
 				PicHasAnnotations = 1;
-
-				if(pLne->Model_Code < MODELCODE::MODEL_NUM_ENTRIES)
-					stats.Cnt.ModelCode[pLne->Model_Code]++;
-
 				if(pLne->ClassId >= 0){	// because a negative picture has class id = -1
+
+					if(pLne->Model_Code < MODELCODE::MODEL_NUM_ENTRIES)
+						stats.Cnt.ModelCode[pLne->Model_Code]++;
 					ClassInPic[pLne->ClassId] = 1;
 					CLASS_STATS *pClassStats = &stats.Class[pLne->ClassId];
 					pClassStats->Count++;
@@ -576,7 +579,7 @@ void CYoloExportDlg::LoadStatistics(STATISTICS &stats, BOOL UseAnnotationFilter)
 						dp = min(dp, DISTRIBUTION_COUNT-1);
 						pClassStats->Distribution_W[dp]++;
 					}
-					stats.Cnt.Annotations++;
+					stats.Cnt.PositiveAnnotations++; // positive annotations, i.e. it does not include negatives
 				}
 			}
 		}
@@ -587,8 +590,8 @@ void CYoloExportDlg::LoadStatistics(STATISTICS &stats, BOOL UseAnnotationFilter)
 			for(int c=0; c<_MAX_CLASSES_; c++)
 				if(ClassInPic[c]) stats.Class[c].OnePerPicCount++;
 
-			if(pFnG->pClsfdLines[0].ClassId < 0) stats.Cnt.Negative++;
-			else stats.Cnt.Positive++;
+			if(pFnG->pClsfdLines[0].ClassId < 0) stats.Cnt.NegativePics++;
+			else stats.Cnt.PositivePics++;
 
 			if(pFnG->pPicInfo->ColourCode < COLOURCODE::COLOUR_NUM_ENTRIES)
 				stats.Cnt.ColourCode[pFnG->pPicInfo->ColourCode]++;
@@ -609,9 +612,7 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 
 		STATISTICS stats={0};
 		LoadStatistics(stats, UseAnnotationFilter);
-
 		CString Str, add;
-		float avgapp = (float)stats.Cnt.Annotations / (float)stats.Cnt.Pictures;
 
 		Str.Format("Pictures in source csv file(s): %d\r\n______________________________________________________\r\nStatistics that follow are for the current picture filter selection...\r\n______________________________________________________\r\nPICTURES : %d (%.2f%%)\r\n", 
 			m_NumSourceFilenameGroups, stats.Cnt.Pictures, MakePercentage(stats.Cnt.Pictures, m_NumSourceFilenameGroups));
@@ -619,9 +620,9 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 		Str += add;
 		add.Format("\r\nHt %s", GetMMAString(&stats.PicHt));
 		Str += add;
-		add.Format("\r\n\r\nPositives : %d (%.2f%%)\r\nNegatives : %d (%.2f%%)\r\n\r\nNot classified : %d (%.2f%%)\r\nClassified accept : %d (%.2f%%)\r\nClassified refuse : %d (%.2f%%)\r\nClassified special : %d (%.2f%%)\r\n\r\nPics with objects with multiple probabilities : %d (%.2f%%)\r\n", 
-			stats.Cnt.Positive, MakePercentage(stats.Cnt.Positive, stats.Cnt.Pictures), stats.Cnt.Negative, MakePercentage(stats.Cnt.Negative, stats.Cnt.Pictures), 
+		add.Format("\r\n\r\nNot classified : %d (%.2f%%)\r\nClassified accept : %d (%.2f%%)\r\nClassified refuse : %d (%.2f%%)\r\nClassified special : %d (%.2f%%)\r\n\r\nPositives : %d (%.2f%%)\r\nNegatives : %d (%.2f%%)\r\n\r\nPictures with objects with multiple probabilities : %d (%.2f%%)", 
 			stats.Cnt.NotClsfd, MakePercentage(stats.Cnt.NotClsfd, stats.Cnt.Pictures), stats.Cnt.Accept, MakePercentage(stats.Cnt.Accept, stats.Cnt.Pictures), stats.Cnt.Refuse, MakePercentage(stats.Cnt.Refuse, stats.Cnt.Pictures), stats.Cnt.Special, MakePercentage(stats.Cnt.Special, stats.Cnt.Pictures),
+			stats.Cnt.PositivePics, MakePercentage(stats.Cnt.PositivePics, stats.Cnt.Pictures), stats.Cnt.NegativePics, MakePercentage(stats.Cnt.NegativePics, stats.Cnt.Pictures), 
 			stats.Cnt.MultipleProbsPics, MakePercentage(stats.Cnt.MultipleProbsPics, stats.Cnt.Pictures));
 		Str += add;
 		int i;
@@ -631,17 +632,17 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 				Str += add;
 			}
 		}
-		Str += "\r\n";
+		//Str += "\r\n";
 		for(i=0; i<PICTURECODE::PIC_NUM_ENTRIES; i++){
 			if(stats.Cnt.PictureCode[i] > 0){
 				add.Format("\r\n%s : %d (%.2f%%)", g_pPictureCode[i], stats.Cnt.PictureCode[i], MakePercentage(stats.Cnt.PictureCode[i], stats.Cnt.Pictures));
 				Str += add;
 			}
 		}
-		Str += "\r\n";
+		//Str += "\r\n";
 		for(i=0; i<MODELCODE::MODEL_NUM_ENTRIES; i++){
 			if(stats.Cnt.ModelCode[i] > 0){
-				add.Format("\r\n%s : %d (%.2f%%)", g_pModelCode[i], stats.Cnt.ModelCode[i], MakePercentage(stats.Cnt.ModelCode[i], stats.Cnt.Annotations));
+				add.Format("\r\n%s : %d (%.2f%%)", g_pModelCode[i], stats.Cnt.ModelCode[i], MakePercentage(stats.Cnt.ModelCode[i], stats.Cnt.PositiveAnnotations));
 				Str += add;
 			}
 		}
@@ -649,13 +650,17 @@ void CYoloExportDlg::StatisticsPopup(BOOL UseAnnotationFilter)
 		if(m_TargetWd<=0.0f || m_TargetHt<=0.0f)
 			pWarn = "\r\n\r\n***SET TARGET DIMENSIONS IN Options DIALOG***\r\n\r\n";
 
-		add.Format("\r\n______________________________________________________\r\nANNOTATIONS : %d (avg per picture : %.2f)\r\n\r\nTarget size - Wd %d, Ht %d%s\r\n", stats.Cnt.Annotations, avgapp, (int)m_TargetWd, (int)m_TargetHt, pWarn);
+		float AvgAnnosPerPic = 0.0f; // avg annotations per picture excludes negatives, so if all pictures are negatives then avg annotations per picture will be zero.
+		if(stats.Cnt.PositivePics > 0)
+			AvgAnnosPerPic = (float)stats.Cnt.PositiveAnnotations / (float)stats.Cnt.PositivePics;
+
+		add.Format("\r\n______________________________________________________\r\nANNOTATIONS : %d (avg per picture : %.2f)\r\n\r\nTarget size - Wd %d, Ht %d%s\r\n", stats.Cnt.PositiveAnnotations, AvgAnnosPerPic, (int)m_TargetWd, (int)m_TargetHt, pWarn);
 		Str += add;
-		Str += "Below, min/max - box pixel size scaled to target.\r\nNumber in square brackets after min and max is an example picture index.\r\nDistribution - relative size (0.0 to 1.0) in 0.1 increments.";
+		Str += "Below, min/max - box pixel size scaled to target.\r\nDistribution - relative size (0.0 to 1.0) in 0.1 increments.";
 		CLASS_STATS *pClassStats = stats.Class;
 		for(i=0; i<_MAX_CLASSES_; i++, pClassStats++){
 			if(pClassStats->Count > 0){
-				add.Format("\r\n\r\n[%d:%s] : %d (%.2f%%), pictures with : %d (%.2f%%)", i, g_CIdM.GetLabel(i), pClassStats->Count, MakePercentage(pClassStats->Count, stats.Cnt.Annotations), pClassStats->OnePerPicCount, MakePercentage(pClassStats->OnePerPicCount, stats.Cnt.Pictures));
+				add.Format("\r\n\r\n[%d:%s] : %d (%.2f%%), pictures with : %d (%.2f%%)", i, g_CIdM.GetLabel(i), pClassStats->Count, MakePercentage(pClassStats->Count, stats.Cnt.PositiveAnnotations), pClassStats->OnePerPicCount, MakePercentage(pClassStats->OnePerPicCount, stats.Cnt.Pictures));
 				Str += add;
 				if(m_TargetWd>0.0f && m_TargetHt>0.0f){
 					AddSizeDistributionString("Wd", &pClassStats->Wd, pClassStats->Distribution_W, Str, add);

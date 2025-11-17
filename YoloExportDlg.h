@@ -34,12 +34,13 @@ struct CLASS_STATS
 
 struct STATS_COUNT
 {
-	int Pictures, Annotations, Negative, Positive;
+	int Pictures, NegativePics, PositivePics;
+	int PositiveAnnotations;
 	int MultipleProbsPics;
 	int NotClsfd, Accept, Refuse, Special;
 	int ColourCode[COLOURCODE::COLOUR_NUM_ENTRIES];
 	int PictureCode[PICTURECODE::PIC_NUM_ENTRIES];
-	int ModelCode[MODELCODE::MODEL_NUM_ENTRIES];
+	int ModelCode[MODELCODE::MODEL_NUM_ENTRIES]; // positive annotation count per model.
 };
 
 struct STATISTICS
